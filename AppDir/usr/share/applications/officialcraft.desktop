@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=OfficialCraft
+Comment=Minecraft Launcher
+Exec=officialcraft
+Icon=officialcraft
+Terminal=false
+Type=Application
+Categories=Game;
