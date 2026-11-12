@@ -1,76 +1,74 @@
-# OfficialCraft C++ 3.4.0 — Linux
+# OfficialCraft
 
-Native C++17 / Qt 6 Minecraft Java launcher for Linux. Not affiliated with Mojang, Microsoft, Modrinth, or CurseForge.
+A lightweight Minecraft launcher for Linux, designed to keep the launcher simple and minimize unnecessary overhead.
 
-## What's included
+> **Unofficial project:** OfficialCraft is not affiliated with, endorsed by, or sponsored by Mojang or Microsoft. Minecraft is a trademark of Mojang Synergies AB.
+>
+> Use Minecraft and any offline-mode functionality only in accordance with the game's terms and the rights to the game files you use. This project does not include Minecraft game files or provide a Minecraft license.
 
-- Instance-based launcher with separate worlds, mods, resource packs, shader packs, versions, libraries, assets, and natives.
-- Mojang version manifest, game-file download/repair, per-file download queue, SHA-1 verification, and offline launch support.
-- Forge installer integration, including legacy Forge launcher-profile compatibility.
-- Built-in **Modrinth mod browser**: search by name, filter to the selected Minecraft version and Forge, and install compatible releases without entering an API key.
-- Attempts to install required Modrinth dependencies before the selected mod; validates downloaded JAR archives and SHA-1 hashes when supplied.
-- Local mod manager: import JARs, enable/disable, remove, refresh, and open the selected instance's mods folder.
-- Safe Java runtime discovery: checks the configured executable, PATH, JAVA_HOME, common Linux JDK directories, SDKMAN, mise, and local JDK folders.
-- Reads Minecraft metadata `javaVersion`, checks JVM argument compatibility, prefers an exact Java major version, and refuses to launch with an older incompatible runtime.
-- Java Auto-detect and Browse controls; Forge installer uses a compatible Java runtime too.
-- Clean launch wrapper to avoid inherited Snap/GTK library conflicts on affected Ubuntu desktops.
+## Features
 
-## Mod downloads — no API key
+- Lightweight Linux launcher.
+- Java Edition support.
+- Build an AppImage locally from the project source.
+- Uses `linuxdeploy` and its Qt plugin to package the application.
 
-The mod browser uses Modrinth's public API. Modrinth documents that most read-only API requests do not require authentication. OfficialCraft does not ask for, store, or send an API key. The old CurseForge API-key field and authenticated CurseForge download code have been removed. This release downloads mods from Modrinth only; it does not scrape CurseForge pages or bypass CurseForge's access controls.
+## Build on Linux
 
-Mod search and version selection are filtered to the Minecraft version selected for the instance and Forge. The Forge profile must already be installed and selected before installing Forge mods. The downloader selects the primary file (or first file if none is marked primary), verifies SHA-1 where available, checks that the downloaded file is a ZIP/JAR archive, and installs required dependencies when Modrinth provides compatible dependency metadata.
+### Requirements
 
-## Ubuntu dependencies
+- A Linux distribution with a supported package manager (`apt`, `dnf`, `pacman`, or `zypper`).
+- The project source code, including `build.sh`.
+- An internet connection for downloading the packaging tools.
+- A working Qt 6 development environment.
 
-```bash
-sudo apt update
-sudo apt install build-essential cmake qt6-base-dev qt6ct openjdk-8-jre openjdk-17-jre openjdk-21-jre unzip
-```
+### Build
 
-Java is discovered automatically. Install the runtime major version required by the selected Minecraft metadata; older releases such as Minecraft 1.12.2 generally require Java 8, while modern releases commonly require Java 21 or newer. The launcher will display the versions it finds if no compatible runtime is installed.
+1. Download or clone the complete project source.
+2. Open a terminal in the project directory.
+3. Make the build script executable:
 
-## Build and run
+   ```bash
+   chmod +x ./create.sh
+   ```
 
-Extract the ZIP, then from the project directory:
+4. Run it:
 
-```bash
-chmod +x build.sh run.sh
-JOBS=1 ./build.sh
-./run.sh
-```
+   ```bash
+   ./create.sh
+   ```
 
-Use `./run.sh` rather than launching `./build/officialcraft` directly on systems where Snap/GTK variables leak into Qt processes. The wrapper clears inherited library/plugin variables while preserving the display session.
+The script installs the required system packages (after asking for confirmation), runs the project's `build.sh`, downloads `linuxdeploy` and its Qt plugin, and attempts to package the application as an AppImage.
 
-## Instance data
-
-Data is stored under Qt's per-user application data directory, normally `~/.local/share/OfficialCraft/officialcraft/`:
+The expected output filename is:
 
 ```text
-instances/<instance>/
-  game/{saves,mods,resourcepacks,shaderpacks}/
-  versions/<version>/
-  libraries/
-  assets/{indexes,objects}/
-  natives/
-  logs/
-  instance.json
+OfficialCraft-3.3.1-x86_64.AppImage
 ```
 
-**Do not delete the `instances` directory when updating the launcher**; it contains your worlds, installed mods, and game data. Replace the source files and rebuild only the `build/` directory.
+The AppImage is intended for **x86_64** Linux systems.
 
-## Current limitations
+## Build configuration
 
-- Microsoft OAuth / Xbox / Minecraft Services authentication is not implemented. Launch is offline-only; authenticated multiplayer and Realms are unavailable.
-- The in-app mod browser currently supports Forge mods from Modrinth. Fabric, NeoForge, and Quilt installers/browsing are not included in this release.
-- CurseForge integration and CurseForge modpack import are not included.
-- Modrinth projects may have external dependencies or optional requirements that cannot be installed automatically. Review a mod's requirements before launching.
-- Download batches run in parallel, but there are no pause/resume controls or persistent queue recovery yet.
-- Automatic Java discovery searches standard Linux locations but does not download or install JDKs. If the required runtime is missing, install it with your distribution package manager and press Auto-detect.
-- The launch argument builder remains basic and is not fully compatible with every modern Minecraft release.
-- This source revision could not be compiled in the generation environment because Qt 6 development packages are unavailable there. Build and test it on the target Ubuntu PC before relying on it.
+The script uses `JOBS=1` by default to keep build resource usage low. To override this, run:
 
+```bash
+JOBS=4 ./create.sh
+```
 
-## Java runtime discovery
+Change `4` to the number of parallel build jobs you want to use.
 
-Each instance may use `auto` (recommended) or an explicit executable path. On launch, OfficialCraft inspects installed Java executables with `java -version`, reads `javaVersion.majorVersion` from Minecraft version metadata, and checks known JVM flags. It searches PATH, JAVA_HOME, `/usr/lib/jvm`, `/usr/java`, `/usr/local/java`, `/opt/java`, `/opt/jdk`, `~/.jdks`, SDKMAN, and mise installations. It prefers an exact Java major match and will not choose an older runtime than the metadata requires. The launcher does not run shell commands from metadata and does not silently rewrite JVM arguments.
+## Troubleshooting
+
+- **`build.sh` not found:** Make sure you downloaded the complete source repository and run `create.sh` from that project.
+- **Qt / qmake not found:** Install the Qt 6 development packages for your distribution and ensure `qmake6` or Qt 6's `qmake` is available.
+- **Build fails:** Read the first error printed by `build.sh`; the packaging step cannot work unless the application binary is created at `build/officialcraft`.
+- **AppImage does not start:** Some Linux distributions may need additional FUSE compatibility packages. You can also try the AppImage's supported extraction/run options.
+
+## Project status and contributions
+
+Issues, bug reports, and improvements are welcome. Please include your Linux distribution, architecture, and the relevant build or runtime error when reporting a problem.
+
+## Disclaimer
+
+This repository provides launcher source code and build instructions. It does not distribute Minecraft, game assets, account credentials, or a license. You are responsible for complying with applicable laws and the Minecraft End User License Agreement.
